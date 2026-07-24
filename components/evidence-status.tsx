@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import type { EvidenceStatus } from "@/lib/voter-data";
+import type { EvidenceStatus } from "@/lib/voter-types";
 
 const statusContent: Record<
   EvidenceStatus,

@@ -1,7 +1,7 @@
 import { ExternalLink } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import type { Source } from "@/lib/voter-data";
+import type { Source } from "@/lib/voter-types";
 
 type SourceLinkProps = {
   source: Source;

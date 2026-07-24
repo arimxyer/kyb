@@ -41,7 +41,12 @@ export default defineSchema({
     slug: v.string(),
     name: v.string(),
     electionDate: v.number(),
+    earlyVotingStart: v.optional(v.number()),
+    earlyVotingEnd: v.optional(v.number()),
     jurisdiction: v.string(),
+    county: v.optional(v.string()),
+    pilotZip: v.optional(v.string()),
+    candidateSourceId: v.optional(v.id("sources")),
     status: v.union(
       v.literal("scheduled"),
       v.literal("active"),

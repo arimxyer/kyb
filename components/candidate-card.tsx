@@ -10,10 +10,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { Candidate } from "@/lib/voter-data";
+import type { CandidateSummary } from "@/lib/voter-types";
 
 type CandidateCardProps = {
-  candidate: Candidate;
+  candidate: CandidateSummary;
   compact?: boolean;
 };
 
