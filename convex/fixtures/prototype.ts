@@ -1,3 +1,9 @@
+/**
+ * Seed-only fixture for the NY-04 prototype.
+ *
+ * Runtime application code must read through Convex functions instead of
+ * importing this module.
+ */
 export type EvidenceStatus =
   | "verified"
   | "candidate-statement"

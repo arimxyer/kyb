@@ -4,7 +4,7 @@ import {
   candidates as prototypeCandidates,
   election as prototypeElection,
   sources as prototypeSources,
-} from "../lib/voter-data";
+} from "./fixtures/prototype";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation } from "./_generated/server";
 

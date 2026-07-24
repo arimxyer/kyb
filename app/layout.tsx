@@ -11,9 +11,6 @@ export const metadata: Metadata = {
   },
   description:
     "A nonpartisan, evidence-first guide to the candidates and choices on your ballot.",
-  other: {
-    "codex-preview": "development",
-  },
 };
 
 export default function RootLayout({

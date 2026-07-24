@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import {
   ArrowRight,
   LocateFixed,
@@ -28,7 +28,7 @@ export function LocationLookup() {
     window.location.assign("/ballot?zip=11557");
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!address.trim()) {
       setMessage("Enter a street address or ZIP code to continue.");
@@ -93,13 +93,12 @@ export function LocationLookup() {
           </div>
 
           {message && (
-            <p
+            <output
               id="address-message"
-              role="status"
               className="text-sm text-rose-800"
             >
               {message}
-            </p>
+            </output>
           )}
 
           <div className="grid gap-2 sm:grid-cols-[1fr_auto]">

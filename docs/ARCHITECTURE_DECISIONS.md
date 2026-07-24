@@ -19,20 +19,23 @@ into a locally developed, directly hosted, dependable product.
 | Area | Current reality |
 |---|---|
 | Product coverage | NY-04 / ZIP 11557 pilot |
-| Frontend | Next.js API surface currently built by vinext/Vite |
-| Current frontend host | Owner-only ChatGPT Sites deployment |
+| Frontend | Next.js `16.2.11` built for Cloudflare Workers with OpenNext `1.20.2` |
+| Current frontend host | No production Worker promoted yet; the repository's ChatGPT Sites path is retired |
 | Backend | Convex |
 | Production Convex | `https://warmhearted-raccoon-48.convex.cloud` |
 | Cloud development Convex | `https://sleek-snail-205.convex.cloud` |
+| Local development Convex | Local deployment on `http://127.0.0.1:3210` when `bunx convex dev` is running |
 | Production data | Seeded election, race, three candidates, claims, sources, finance, endorsements, and office history |
+| Integration data | Prototype fixture synced and seeded on 2026-07-24 |
 | Ingestion | Hourly custom Convex source refresh with snapshots and change detection |
 | Review | Private internal draft/review/publish functions; no authenticated editor UI yet |
-| Repository residue | Unused D1/Drizzle files and Sites-specific build/auth helpers remain |
+| Package and lint baseline | Bun `1.3.14`; Oxlint `1.75.0` with type-aware rules; TypeScript `6.0.3` |
+| Repository residue | Sites/vinext/Vite and D1/Drizzle code, scripts, dependencies, and manifests removed |
 | Planned components | Not installed yet |
 
-The application is not currently splitting runtime reads between Convex and
-D1. D1 and Drizzle are inactive starter residue. `lib/voter-data.ts` is imported
-only by the Convex seed and is a fixture, not a runtime database.
+The application does not split runtime reads or writes across backends. Convex
+is the only application backend. The prototype data now lives at
+`convex/fixtures/prototype.ts` and is imported only by the Convex seed.
 
 ## Target architecture
 
@@ -58,9 +61,10 @@ depend on a developer computer being online.
 | Cloud development backend | Decided | Integration-testing lane |
 | Production backend | Decided | Existing hosted Convex production deployment |
 | Frontend runtime | Decided | Next.js deployed to Cloudflare with OpenNext |
-| Current vinext path | Superseded after migration | Keep only until OpenNext behavior and deployment are verified |
-| ChatGPT Sites | Superseded | No future deployments; remove repository integration during cleanup |
-| Drizzle and D1 | Superseded | Remove entirely |
+| Package manager | Decided | Bun with a committed `bun.lock` and frozen CI installs |
+| Current vinext path | Removed | OpenNext behavior and Worker preview are verified |
+| ChatGPT Sites | Removed | No future deployments; repository integration is gone |
+| Drizzle and D1 | Removed | Convex is the sole backend |
 | CI/CD | Decided | GitHub Actions with protected production promotion |
 | Editor identity | Decided | Convex Auth, GitHub OAuth initially |
 | Editor authorization | Decided | Convex role membership and server-side permission checks |
@@ -71,6 +75,64 @@ depend on a developer computer being online.
 Decisions marked “Decided” are not invitations for a new agent to restart the
 architecture discussion. A decision may change only when implementation
 evidence reveals a real incompatibility; document that evidence here first.
+
+## ADR-000: Bun and current stable dependencies
+
+### Decision
+
+Use Bun as the sole package manager. Pin the Bun version through
+`packageManager`, commit `bun.lock`, and use `bun install --frozen-lockfile`
+locally and in CI when verifying reproducibility. Do not add npm, pnpm, or Yarn
+lockfiles.
+
+At the start of a milestone, upgrade retained dependencies to the latest
+mutually compatible stable releases and validate the complete application.
+Packages already scheduled for deletion are removed at their planned milestone
+instead of being upgraded for their own sake.
+
+### Linter and TypeScript compatibility resolution
+
+On 2026-07-24, Phase 0 first established TypeScript `6.0.3` and ESLint
+`9.39.4` as the newest mutually compatible baseline. A reversible spike then
+showed that the standalone TypeScript 7 CLI and the old vinext lane could pass
+with Oxlint, but intentionally deferred adoption until the real Next/OpenNext
+runtime existed.
+
+Milestone 1 reran the decision against Next.js `16.2.11`, OpenNext `1.20.2`,
+and local `workerd`:
+
+- `@oxlint/migrate` translated 68 active ESLint rules and reported 17
+  unsupported rules. Two are obsolete under the modern JSX transform, one is
+  covered by the type-aware `typescript/no-deprecated` rule, and the remaining
+  React Compiler checks are represented by Oxlint's experimental aggregate
+  `react/react-compiler` rule.
+- The retained config enables the full correctness category, migrated Next.js,
+  React, import, accessibility, and TypeScript rules, type-aware linting through
+  `oxlint-tsgolint` `7.0.2001`, and `--deny-warnings`.
+- The stricter pass identified six issues the previous ESLint baseline did not:
+  React 19 submit-event types, a floating OpenNext initialization promise, two
+  opportunities for native status/progress elements, and two component-level
+  accessibility findings. The real findings were fixed; the reusable label
+  primitive has one narrow documented suppression because association belongs
+  to each call site.
+- TypeScript `7.0.2` still passes standalone `tsc --noEmit`, Oxlint, unit
+  tests, and the Convex CLI. However, Next.js `16.2.11` does not accept the
+  TypeScript 7 package as its production-build compiler. `next build` attempted
+  to install TypeScript through npm and then failed before page generation with
+  an invalid compiler-module result.
+
+Therefore KYB adopts Oxlint `1.75.0` and removes ESLint, while retaining
+TypeScript `6.0.3`. Revisit TypeScript 7 only when the exact Next and OpenNext
+production builds pass without fallback package installation.
+
+### Acceptance
+
+- `bun.lock` is the only package-manager lockfile.
+- A frozen Bun install succeeds from a clean dependency directory.
+- TypeScript, type-aware Oxlint, the frontend build, and tests pass on the
+  resolved set.
+- Any package held below latest stable has a concrete compatibility reason.
+- Superseded Sites, vinext, Vite, D1, and Drizzle dependencies are removed.
 
 ## ADR-001: Convex is the only application backend
 
@@ -108,6 +170,8 @@ future work writes to the wrong backend.
 - Prototype fixtures are clearly labeled and cannot be imported by frontend
   runtime code.
 
+Implementation status: complete on 2026-07-24.
+
 ## ADR-002: local-first development with three explicit lanes
 
 ### Decision
@@ -120,19 +184,19 @@ production deployment.
 Create/select local Convex once with:
 
 ```bash
-npx convex deployment create local --select
+bunx convex deployment create local --select
 ```
 
 Select an existing local deployment later with:
 
 ```bash
-npx convex deployment select local
+bunx convex deployment select local
 ```
 
 Return to the personal cloud development deployment with:
 
 ```bash
-npx convex deployment select dev
+bunx convex deployment select dev
 ```
 
 ### Why
@@ -151,6 +215,21 @@ hosted integration.
 - Environment files never contain deploy keys in Git.
 - Test fixtures target local or isolated preview deployments.
 
+Implemented commands:
+
+- `bun run dev` / `bun run dev:local`
+- `bun run dev:integration`
+- `bun run preview` / `bun run preview:local`
+- `bun run preview:integration`
+- `bun run deploy:production`
+
+The production command requires the exact production Convex URL, `CI=true`,
+`GITHUB_ACTIONS=true`, and `KYB_ALLOW_PRODUCTION_DEPLOY=1`. Guard unit tests
+verify local and integration acceptance plus production rejection. A local
+deployment was created, pushed, seeded, and browser-tested on 2026-07-24. The
+cloud development deployment was also synchronized and seeded for integration
+browser verification.
+
 References:
 
 - https://docs.convex.dev/cli/local-deployments
@@ -161,21 +240,32 @@ References:
 
 ### Decision
 
-Move from the current Sites/vinext build path to actual Next.js built and
-deployed with `@opennextjs/cloudflare`.
+Use actual Next.js built and deployed with `@opennextjs/cloudflare`. The
+Sites/vinext path is removed.
 
 ### Evaluation performed
 
-On 2026-07-24 the repository was tested both ways:
+On 2026-07-24 the repository was tested both ways and then migrated:
 
 - The existing vinext production build passed.
-- A temporary OpenNext migration used Next.js `16.2.11`,
+- The retained OpenNext migration uses Next.js `16.2.11`,
   `@opennextjs/cloudflare` `1.20.2`, a standard `wrangler.jsonc`, and
   `open-next.config.ts`.
 - The complete application compiled, typechecked, rendered all six routes, and
   produced `.open-next/worker.js`.
-- No application component or route code needed to change for the OpenNext
-  build.
+- The local Next lane and the OpenNext/`workerd` lane both hydrated Convex data
+  from the local deployment.
+- The Worker preview served home, ballot, race, both tested candidate profiles,
+  and research routes with HTTP 200 responses. Desktop and 390-pixel mobile
+  browser checks found no framework overlay, console error, horizontal
+  overflow, or missing mobile navigation.
+- The integration check initially exposed an out-of-date cloud development
+  deployment. After a non-production `convex dev --once` sync and idempotent
+  seed, the real ballot, comparison, candidate, and research UI hydrated
+  without errors.
+- An ignored legacy `.wrangler/deploy/config.json` redirected the first preview
+  to the old vinext bundle. Removing that generated local state made Wrangler
+  correctly use `wrangler.jsonc` and `.open-next/worker.js`.
 
 The existing repository pins Next.js `16.2.6`. Upgrade to at least `16.2.11`
 during migration because the current OpenNext adapter requires the patched
@@ -190,15 +280,14 @@ reimplementation. Since this application passes OpenNext without product-code
 changes, retaining vinext would preserve experimental adapter risk without a
 material migration benefit.
 
-### Migration scope
+### Migration result
 
-- Add `@opennextjs/cloudflare`.
-- Add `open-next.config.ts` and a standard `wrangler.jsonc`.
-- Use `next dev` for the fast local frontend loop.
-- Add an OpenNext/`workerd` preview command for production-runtime checks.
-- Build and deploy with the OpenNext Cloudflare CLI.
-- Remove `vite.config.ts`, `worker/index.ts`, `build/sites-vite-plugin.ts`,
-  vinext/Vite-only dependencies, and Sites build scripts after parity passes.
+- Added `@opennextjs/cloudflare`, `open-next.config.ts`, and `wrangler.jsonc`.
+- `next dev` is the fast local frontend loop.
+- OpenNext/`workerd` preview commands cover local and integration Convex.
+- The protected production command uses the OpenNext Cloudflare CLI.
+- `vite.config.ts`, `worker/index.ts`, `build/sites-vite-plugin.ts`,
+  vinext/Vite-only dependencies, and Sites build scripts are removed.
 
 ### Acceptance
 
@@ -208,6 +297,10 @@ material migration benefit.
 - Responsive/mobile navigation and loading/error states pass browser tests.
 - OpenNext build, Worker preview, and deploy commands are documented.
 - No `.openai/hosting.json` or Sites artifact validation remains.
+
+Repository migration status: complete on 2026-07-24. Actual Cloudflare
+production promotion remains Milestone 2 work and must go through GitHub
+Actions.
 
 References:
 
@@ -248,7 +341,7 @@ Pull requests must run:
 
 1. locked dependency install
 2. TypeScript
-3. ESLint
+3. type-aware Oxlint with warnings denied
 4. unit/backend tests
 5. browser tests against local Convex
 6. OpenNext production build
@@ -403,15 +496,28 @@ substitute for source support.
 
 ## Delivery sequence
 
+### Phase 0: package manager and dependency baseline
+
+Status: complete on 2026-07-24.
+
+- Migrated from npm to Bun with `bun.lock` as the only lockfile.
+- Upgraded retained dependencies to their latest mutually compatible stable
+  versions.
+- Adopted type-aware Oxlint; retained TypeScript `6.0.3` because the actual
+  Next.js build rejects the TypeScript 7 package.
+
 ### Milestone 1: architecture cleanup and OpenNext
 
-- Upgrade Next.js to a patched supported release.
-- Remove D1/Drizzle and Sites residue.
-- Move the prototype seed fixture.
-- Migrate to OpenNext.
-- Add local, cloud-integration, Worker-preview, and deployment scripts.
-- Add a hard production-URL guard to local startup.
-- Preserve all current routes and responsive behavior.
+Status: complete on 2026-07-24.
+
+- Upgraded Next.js to `16.2.11`.
+- Removed D1/Drizzle and Sites/vinext/Vite residue.
+- Moved the prototype seed fixture to `convex/fixtures/prototype.ts`.
+- Migrated to OpenNext `1.20.2`.
+- Added local, cloud-integration, Worker-preview, and guarded production
+  scripts.
+- Added and tested hard environment-target guards.
+- Preserved all current routes and responsive behavior in browser verification.
 
 ### Milestone 2: CI/CD and test lanes
 
@@ -448,8 +554,31 @@ substitute for source support.
 
 ## Immediate handoff
 
-The next local agent starts with Milestone 1. It should not add the editorial UI
-on top of the current Sites/D1 residue. The cleanup must preserve the working
-NY-04 Convex-backed prototype while making the repository accurately describe
-its real architecture.
+The next local agent starts with Milestone 2. The implementation order is:
 
+1. Add GitHub pull-request validation for frozen Bun install, TypeScript,
+   type-aware Oxlint, unit tests, local Convex, browser flows, Next build, and
+   OpenNext Worker smoke tests.
+2. Add deterministic local fixture reset/seed helpers so CI and browser tests
+   never rely on shared integration state.
+3. Add Convex preview-deployment behavior for branches that change the backend.
+4. Configure a protected GitHub production environment with least-privilege
+   Convex and Cloudflare credentials.
+5. Verify a release candidate, deploy Convex first, then promote the exact
+   tested OpenNext artifact.
+
+Do not start Convex Auth/editorial UI until that release foundation is
+repeatable. Do not run the production command locally.
+
+Verification receipt from 2026-07-24:
+
+- frozen Bun install: pass
+- `bun run typecheck`: pass
+- `bun run lint`: pass with type-aware Oxlint and denied warnings
+- `bun run test`: 4 of 4 guard tests pass
+- `bun run build`: pass; six App Router routes emitted
+- `bun run build:worker`: pass; `.open-next/worker.js` emitted
+- local Convex push and idempotent seed: pass
+- integration Convex sync and idempotent seed: pass
+- local Next hydration and local/integration Worker browser flows: pass
+- production deployment: not run

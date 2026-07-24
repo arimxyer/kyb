@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { Bot, Search, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -73,7 +73,7 @@ export function EvidenceExplorer() {
     typeof answerQuestion
   > | null>(null);
 
-  function submitQuestion(event: FormEvent<HTMLFormElement>) {
+  function submitQuestion(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!question.trim()) return;
     setAnswer(answerQuestion(question));

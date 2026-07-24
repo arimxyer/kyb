@@ -28,10 +28,9 @@ change detection, and a private review-state foundation.
 - **Source and releases:** GitHub with protected CI/CD.
 - **Editor identity:** Convex Auth and Convex-hosted role authorization.
 
-The repository is in a short transition. It still contains a working
-Sites/vinext build and unused D1/Drizzle starter residue. Those files are
-explicitly superseded and are the first cleanup milestone; they are not part of
-the intended architecture.
+The repository now uses the target frontend and data architecture: standard
+Next.js builds, OpenNext Worker bundles, and Convex as the sole backend. The
+former Sites/vinext and D1/Drizzle paths have been removed.
 
 Read [AGENTS.md](./AGENTS.md) and
 [the architecture decision record](./docs/ARCHITECTURE_DECISIONS.md) before
@@ -52,39 +51,55 @@ Never point local development at production.
 Prerequisites:
 
 - Node.js `>=22.13.0`
-- npm
+- Bun `1.3.14`
 - Convex CLI through the repository dependency
 
 Install:
 
 ```bash
-npm ci
+bun install --frozen-lockfile
 cp .env.example .env.local
 ```
 
 Create and select a local Convex deployment the first time:
 
 ```bash
-npx convex deployment create local --select
-npx convex dev
+bunx convex deployment create local --select
 ```
 
 If the local deployment already exists:
 
 ```bash
-npx convex deployment select local
-npx convex dev
+bunx convex deployment select local
 ```
 
-In a second terminal, start the current frontend:
+Keep the local backend running in one terminal:
 
 ```bash
-npm run dev
+bunx convex dev
 ```
 
-The first architecture-cleanup milestone will change the frontend command from
-the current vinext/Vite implementation to standard `next dev` and will add an
-OpenNext Worker-preview command.
+Seed a new local deployment once, from another terminal:
+
+```bash
+bunx convex run seed:prototype
+```
+
+Start the frontend in a second long-running terminal:
+
+```bash
+bun run dev
+```
+
+`bun run dev` uses `next dev` and refuses to start unless
+`NEXT_PUBLIC_CONVEX_URL` selects a local Convex deployment.
+
+To exercise the production-style Worker runtime while local Convex remains
+running:
+
+```bash
+bun run preview
+```
 
 ## Cloud integration lane
 
@@ -92,35 +107,58 @@ Use the cloud development deployment only when testing hosted cron behavior,
 public callbacks, shared state, or other cloud-only behavior:
 
 ```bash
-npx convex deployment select dev
-npx convex dev
+bunx convex deployment select dev
+bunx convex dev
+```
+
+In a second terminal:
+
+```bash
+bun run dev:integration
+```
+
+For the OpenNext Worker runtime against integration Convex:
+
+```bash
+bun run preview:integration
 ```
 
 Return to local mode afterward:
 
 ```bash
-npx convex deployment select local
+bunx convex deployment select local
 ```
 
 ## Current validation
 
-Until the OpenNext cleanup lands, the checked-in validation commands are:
-
 ```bash
-npx tsc --noEmit
-npm run lint
-npm test
+bun install --frozen-lockfile
+bun run typecheck
+bun run lint
+bun run test
+bun run build
+bun run build:worker
 ```
 
-The target GitHub workflow adds local-Convex backend tests, browser tests,
-OpenNext production builds, and Worker-runtime smoke tests.
+Linting uses Oxlint `1.75.0` with its correctness category, migrated Next.js,
+React, import, and accessibility rules, type-aware checks through
+`oxlint-tsgolint`, and warnings treated as failures. TypeScript is held at
+`6.0.3` because Next.js `16.2.11` cannot complete its production build with the
+TypeScript 7 package.
+
+The next GitHub workflow milestone will automate local-Convex backend tests,
+browser tests, OpenNext production builds, and Worker-runtime smoke tests.
 
 ## Production safety
 
-`npx convex deploy` targets production. Do not run it during ordinary
+`bunx convex deploy` targets production. Do not run it during ordinary
 development. Production promotion will be owned by a protected GitHub
 environment that deploys Convex, builds against the production Convex URL, and
 then deploys the exact tested frontend commit to Cloudflare.
+
+`bun run deploy:production` is intentionally unusable from an ordinary local
+shell. It requires the exact production Convex URL, GitHub Actions, CI, and the
+protected release flag.
 
 Never commit:
 
@@ -131,12 +169,16 @@ Never commit:
 
 ## Next milestone
 
-The next local agent starts with architecture cleanup and OpenNext migration:
+The next local agent starts with GitHub validation and protected production
+promotion:
 
-1. Upgrade Next.js to a patched OpenNext-supported release.
-2. Remove D1, Drizzle, ChatGPT Sites, and vinext-only residue.
-3. Move the prototype data into an explicit Convex fixture.
-4. Add local, integration, Worker-preview, and guarded production commands.
-5. Preserve and browser-test every current route.
+1. Add locked Bun install, typecheck, Oxlint, unit, local-Convex, browser,
+   Next.js, and OpenNext Worker checks.
+2. Add deterministic local fixture reset/seed helpers.
+3. Add branch-preview behavior for backend changes that need hosted testing.
+4. Configure a protected production environment and least-privilege Convex and
+   Cloudflare credentials.
+5. Promote Convex first, then the exact tested OpenNext artifact.
 
-Authenticated editorial controls come immediately after that foundation.
+Convex Auth and authenticated editorial controls follow that release
+foundation.

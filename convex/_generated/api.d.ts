@@ -13,6 +13,7 @@ import type * as candidates from "../candidates.js";
 import type * as crons from "../crons.js";
 import type * as evidence from "../evidence.js";
 import type * as finance from "../finance.js";
+import type * as fixtures_prototype from "../fixtures/prototype.js";
 import type * as health from "../health.js";
 import type * as ingestion from "../ingestion.js";
 import type * as ingestionData from "../ingestionData.js";
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   evidence: typeof evidence;
   finance: typeof finance;
+  "fixtures/prototype": typeof fixtures_prototype;
   health: typeof health;
   ingestion: typeof ingestion;
   ingestionData: typeof ingestionData;

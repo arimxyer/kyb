@@ -25,19 +25,21 @@ every material statement to its source.
 
 - GitHub `arimxyer/kyb`, branch `main`, is the source of truth.
 - Convex is the sole application backend and database.
-- Drizzle, D1, `db/`, `drizzle/`, and the D1 example are obsolete scaffolding.
-  Remove them; do not preserve or expand them.
+- Drizzle, D1, `db/`, `drizzle/`, and the D1 example were obsolete
+  scaffolding and have been removed. Do not reintroduce them.
 - Local frontend plus local Convex is the default daily development lane.
 - The existing Convex cloud development deployment is an integration-testing
   lane, not the default.
 - Production is Cloudflare Workers plus the existing production Convex
   deployment.
-- The frontend will migrate from the Sites/vinext build to Next.js on
-  Cloudflare through `@opennextjs/cloudflare`.
-- ChatGPT Sites and its authentication/build residue are superseded.
+- The frontend runs on Next.js for Cloudflare through
+  `@opennextjs/cloudflare`.
+- ChatGPT Sites and its authentication/build residue are retired and removed.
 - GitHub Actions owns validation and production promotion.
 - Convex Auth owns editor identity. Editor roles and authorization live in
   Convex.
+- Bun is the sole package manager. Commit `bun.lock`; do not add npm, pnpm, or
+  Yarn lockfiles.
 
 ## Environments
 
@@ -47,24 +49,26 @@ every material statement to its source.
 | Integration | `https://sleek-snail-205.convex.cloud` | Cloud runtime, cron, webhook, and shared-state verification |
 | Production | `https://warmhearted-raccoon-48.convex.cloud` | Real production data only |
 
-Never point a local frontend at production. Never run `npx convex deploy` as
+Never point a local frontend at production. Never run `bunx convex deploy` as
 part of ordinary development. Production changes must go through the protected
 GitHub release workflow unless Ari explicitly requests an emergency manual
 deployment.
 
-## Current transitional state
+## Current implementation state
 
-The repository still contains a working Sites/vinext frontend path and unused
-D1/Drizzle starter files. This is known technical residue, not intended
-architecture. Do not mistake the current package manifest for the target state.
+The Bun migration, dependency refresh, architecture cleanup, OpenNext
+migration, explicit development lanes, and production target guards are
+complete. The next milestone is GitHub validation and protected production
+promotion.
 
-The first implementation milestone is the architecture cleanup and OpenNext
-migration described in the decision record. Preserve behavior while removing
-the obsolete layers.
+Oxlint is the linter, including type-aware rules and the experimental aggregate
+React Compiler rule. TypeScript remains on `6.0.3`: the TypeScript 7 CLI passes,
+but Next.js `16.2.11` cannot complete its production build with the TypeScript
+7 package. Do not upgrade TypeScript until an actual Next and OpenNext build
+proves framework support.
 
-`lib/voter-data.ts` is a prototype seed fixture used by `convex/seed.ts`; move
-it to an explicitly named Convex fixture during cleanup. It is not a second
-runtime data source.
+`convex/fixtures/prototype.ts` is a seed-only fixture used by
+`convex/seed.ts`. It is not a second runtime data source.
 
 ## Convex rules
 
@@ -76,7 +80,7 @@ runtime data source.
   roles, or permissions from the client.
 - Use additive optional fields, backfill, then tighten when evolving populated
   production tables.
-- Run `npx tsc --noEmit` and push to a local Convex deployment before declaring
+- Run `bunx tsc --noEmit` and push to a local Convex deployment before declaring
   backend work complete.
 
 ## Planned Convex components
@@ -95,10 +99,13 @@ the feature that exercises it and its acceptance tests.
 
 ## Required implementation order
 
-1. Remove Sites/D1/Drizzle residue and migrate the frontend build to OpenNext.
-2. Add local, cloud-integration, and Worker-preview commands plus production
-   target guards.
-3. Add GitHub validation and protected production deployment.
+0. Completed: use Bun and upgrade retained dependencies to their latest
+   mutually compatible stable versions.
+1. Completed: remove Sites/D1/Drizzle residue and migrate the frontend build to
+   OpenNext.
+2. Completed: add local, cloud-integration, and Worker-preview commands plus
+   production target guards.
+3. Next: add GitHub validation and protected production deployment.
 4. Implement Convex Auth and authenticated editorial controls.
 5. Adopt the ingestion components in the sequence defined by the decision
    record.
@@ -107,4 +114,3 @@ the feature that exercises it and its acceptance tests.
 
 Do not begin AI Q&A before the authenticated review workflow and evidence
 retrieval boundaries are tested.
-

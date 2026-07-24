@@ -10,19 +10,12 @@ export function CoverageMeter({ label, value }: CoverageMeterProps) {
         <span className="font-medium text-foreground">{label}</span>
         <span className="tabular-nums text-muted-foreground">{value}%</span>
       </div>
-      <div
-        className="h-1.5 overflow-hidden rounded-full bg-muted"
-        role="progressbar"
+      <progress
+        className="h-1.5 w-full overflow-hidden rounded-full bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
         aria-label={`${label} source coverage`}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={value}
-      >
-        <div
-          className="h-full rounded-full bg-primary"
-          style={{ width: `${value}%` }}
-        />
-      </div>
+        max={100}
+        value={value}
+      />
     </div>
   );
 }
