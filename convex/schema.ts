@@ -113,6 +113,10 @@ export default defineSchema({
     isPrimary: v.boolean(),
     publishedAt: v.optional(v.number()),
     checkedAt: v.number(),
+    refreshIntervalHours: v.optional(v.number()),
+    nextCheckAt: v.optional(v.number()),
+    lastChangedAt: v.optional(v.number()),
+    contentHash: v.optional(v.string()),
     status: v.union(
       v.literal("active"),
       v.literal("unavailable"),
@@ -121,7 +125,8 @@ export default defineSchema({
   })
     .index("by_external_id", ["externalId"])
     .index("by_url", ["url"])
-    .index("by_source_type", ["sourceType"]),
+    .index("by_source_type", ["sourceType"])
+    .index("by_status_and_next_check_at", ["status", "nextCheckAt"]),
 
   claims: defineTable({
     candidateId: v.id("candidates"),
@@ -139,7 +144,8 @@ export default defineSchema({
     .index("by_candidate", ["candidateId"])
     .index("by_candidate_and_category", ["candidateId", "category"])
     .index("by_race_and_category", ["raceId", "category"])
-    .index("by_source", ["sourceId"]),
+    .index("by_source", ["sourceId"])
+    .index("by_last_reviewed_at", ["lastReviewedAt"]),
 
   officeTerms: defineTable({
     candidateId: v.id("candidates"),
@@ -205,4 +211,85 @@ export default defineSchema({
   })
     .index("by_resource_and_status", ["resourceKey", "status"])
     .index("by_expires_at", ["expiresAt"]),
+
+  sourceSnapshots: defineTable({
+    sourceId: v.id("sources"),
+    url: v.string(),
+    contentHash: v.string(),
+    excerpt: v.string(),
+    fetchedAt: v.number(),
+    httpStatus: v.number(),
+    etag: v.optional(v.string()),
+    lastModified: v.optional(v.string()),
+    changeState: v.union(
+      v.literal("baseline"),
+      v.literal("unchanged"),
+      v.literal("changed"),
+    ),
+    reviewStatus: v.union(
+      v.literal("not-needed"),
+      v.literal("queued"),
+      v.literal("reviewed"),
+      v.literal("ignored"),
+    ),
+    reviewNotes: v.optional(v.string()),
+    reviewedAt: v.optional(v.number()),
+  })
+    .index("by_source_and_fetched_at", ["sourceId", "fetchedAt"])
+    .index("by_review_status_and_fetched_at", [
+      "reviewStatus",
+      "fetchedAt",
+    ]),
+
+  claimDrafts: defineTable({
+    candidateId: v.id("candidates"),
+    raceId: v.id("races"),
+    sourceId: v.optional(v.id("sources")),
+    sourceSnapshotId: v.optional(v.id("sourceSnapshots")),
+    replacesClaimId: v.optional(v.id("claims")),
+    category: claimCategory,
+    topic: v.string(),
+    title: v.string(),
+    detail: v.string(),
+    evidenceStatus,
+    claimDate: v.optional(v.number()),
+    sortOrder: v.number(),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("needs-review"),
+      v.literal("approved"),
+      v.literal("rejected"),
+      v.literal("published"),
+    ),
+    reviewNotes: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    reviewedAt: v.optional(v.number()),
+    publishedAt: v.optional(v.number()),
+    publishedClaimId: v.optional(v.id("claims")),
+  })
+    .index("by_status_and_updated_at", ["status", "updatedAt"])
+    .index("by_candidate_and_status", ["candidateId", "status"])
+    .index("by_source_snapshot", ["sourceSnapshotId"]),
+
+  reviewEvents: defineTable({
+    sourceSnapshotId: v.optional(v.id("sourceSnapshots")),
+    claimDraftId: v.optional(v.id("claimDrafts")),
+    action: v.union(
+      v.literal("source-change-queued"),
+      v.literal("source-change-reviewed"),
+      v.literal("source-change-ignored"),
+      v.literal("draft-created"),
+      v.literal("draft-submitted"),
+      v.literal("draft-approved"),
+      v.literal("draft-rejected"),
+      v.literal("draft-published"),
+    ),
+    actor: v.string(),
+    note: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_created_at", ["createdAt"])
+    .index("by_source_snapshot", ["sourceSnapshotId"])
+    .index("by_claim_draft", ["claimDraftId"]),
 });

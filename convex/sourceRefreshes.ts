@@ -57,15 +57,32 @@ export const markStarted = internalMutation({
     startedAt: v.number(),
     expiresAt: v.number(),
   },
-  returns: v.id("sourceRefreshes"),
-  handler: async (ctx, args) =>
-    await ctx.db.insert("sourceRefreshes", {
+  returns: v.object({
+    refreshId: v.id("sourceRefreshes"),
+    started: v.boolean(),
+  }),
+  handler: async (ctx, args) => {
+    const running = await ctx.db
+      .query("sourceRefreshes")
+      .withIndex("by_resource_and_status", (q) =>
+        q.eq("resourceKey", args.resourceKey).eq("status", "running"),
+      )
+      .order("desc")
+      .first();
+
+    if (running && running.expiresAt > args.startedAt) {
+      return { refreshId: running._id, started: false };
+    }
+
+    const refreshId = await ctx.db.insert("sourceRefreshes", {
       resourceKey: args.resourceKey,
       sourceType: args.sourceType,
       status: "running",
       startedAt: args.startedAt,
       expiresAt: args.expiresAt,
-    }),
+    });
+    return { refreshId, started: true };
+  },
 });
 
 export const markSucceeded = internalMutation({

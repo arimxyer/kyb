@@ -41,6 +41,12 @@ export function SiteHeader() {
           >
             Compare candidates
           </Link>
+          <Link
+            href="/research"
+            className={buttonVariants({ variant: "ghost" })}
+          >
+            Research status
+          </Link>
           <a
             href="https://www.nassaucountyny.gov/566/Board-of-Elections"
             target="_blank"

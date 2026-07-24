@@ -348,3 +348,58 @@ export const prototype = internalMutation({
     };
   },
 });
+
+export const reviewFoundation = internalMutation({
+  args: {},
+  returns: v.object({
+    status: v.literal("ready"),
+    sourcesChecked: v.number(),
+    sourcesUpdated: v.number(),
+  }),
+  handler: async (ctx) => {
+    const sources = await ctx.db
+      .query("sources")
+      .withIndex("by_status_and_next_check_at", (q) =>
+        q.eq("status", "active"),
+      )
+      .take(100);
+    let sourcesUpdated = 0;
+
+    for (const source of sources) {
+      if (
+        source.refreshIntervalHours !== undefined &&
+        source.nextCheckAt !== undefined
+      ) {
+        continue;
+      }
+
+      const refreshIntervalHours =
+        source.sourceType === "filing" ||
+        source.sourceType === "news" ||
+        source.sourceType === "social" ||
+        source.sourceType === "campaign"
+          ? 24
+          : source.sourceType === "government" ||
+                source.sourceType === "party"
+            ? 72
+            : source.sourceType === "research"
+              ? 24 * 14
+              : 24 * 7;
+
+      await ctx.db.patch(source._id, {
+        refreshIntervalHours:
+          source.refreshIntervalHours ?? refreshIntervalHours,
+        nextCheckAt:
+          source.nextCheckAt ??
+          source.checkedAt + refreshIntervalHours * 60 * 60 * 1000,
+      });
+      sourcesUpdated += 1;
+    }
+
+    return {
+      status: "ready" as const,
+      sourcesChecked: sources.length,
+      sourcesUpdated,
+    };
+  },
+});

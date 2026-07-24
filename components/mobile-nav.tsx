@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { House, ListChecks, Scale } from "lucide-react";
+import { DatabaseZap, House, ListChecks, Scale } from "lucide-react";
 
 const items = [
   { href: "/", label: "Home", icon: House },
   { href: "/ballot?zip=11557", label: "Ballot", icon: ListChecks },
   { href: "/race/ny-04", label: "Compare", icon: Scale },
+  { href: "/research", label: "Research", icon: DatabaseZap },
 ];
 
 export function MobileNav() {
@@ -13,7 +14,7 @@ export function MobileNav() {
       aria-label="Mobile navigation"
       className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
-      <div className="mx-auto grid max-w-md grid-cols-3">
+      <div className="mx-auto grid max-w-md grid-cols-4">
         {items.map(({ href, label, icon: Icon }) => (
           <Link
             key={href}

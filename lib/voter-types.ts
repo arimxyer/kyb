@@ -14,6 +14,10 @@ export type CandidatePageData = NonNullable<
   FunctionReturnType<typeof api.ballot.getCandidate>
 >;
 
+export type ResearchStatusData = FunctionReturnType<
+  typeof api.review.getResearchStatus
+>;
+
 export type CandidateSummary = BallotData["candidates"][number];
 export type Candidate = CandidatePageData["candidate"];
 export type EvidenceItem = Candidate["record"][number];
