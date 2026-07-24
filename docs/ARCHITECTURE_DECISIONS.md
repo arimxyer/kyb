@@ -364,6 +364,22 @@ repository:
 Branch previews should use isolated Convex preview deployments when backend
 changes need hosted verification.
 
+Implementation status on 2026-07-24:
+
+- Static, build, browser, local Worker, and same-repository Convex-preview
+  workflows are committed.
+- A manual production workflow is committed but fail-closed. It reruns
+  validation for the exact commit, verifies the production Convex target,
+  uploads an immutable Cloudflare candidate, tests its preview alias, promotes
+  the exact version ID, and verifies the production URL.
+- The first Cloudflare release bootstraps only a 503 maintenance Worker before
+  candidate verification because Cloudflare cannot upload an undeployed first
+  version.
+- Activation remains blocked: the private repository's current GitHub plan
+  cannot provide the required production environment, protected `main` branch,
+  and separate reviewer approval. `docs/RELEASE_SETUP.md` records the setup
+  boundary. No production deployment has been run.
+
 ## ADR-006: Convex Auth and role-based editorial controls
 
 ### Decision
@@ -521,10 +537,18 @@ Status: complete on 2026-07-24.
 
 ### Milestone 2: CI/CD and test lanes
 
-- Add GitHub pull-request validation.
-- Add local Convex fixture reset/seed helpers.
-- Add browser coverage for the main voter flows.
-- Configure protected production promotion to Convex and Cloudflare.
+Implementation status: complete locally on 2026-07-24; external activation
+blocked by the GitHub plan prerequisite.
+
+- Added GitHub pull-request validation.
+- Added bounded, deterministic local Convex fixture reset/seed helpers.
+- Added desktop/mobile browser coverage for the main voter flows.
+- Added actual OpenNext/`workerd` smoke coverage.
+- Added same-repository disposable Convex previews.
+- Added a fail-closed production workflow with a maintenance-only first Worker,
+  immutable candidate verification, and exact-version promotion.
+- Did not configure credentials, weaken protection, or run a production
+  deployment.
 
 ### Milestone 3: authenticated editorial workflow
 
@@ -554,28 +578,21 @@ Status: complete on 2026-07-24.
 
 ## Immediate handoff
 
-The next local agent starts with Milestone 2. The implementation order is:
-
-1. Add GitHub pull-request validation for frozen Bun install, TypeScript,
-   type-aware Oxlint, unit tests, local Convex, browser flows, Next build, and
-   OpenNext Worker smoke tests.
-2. Add deterministic local fixture reset/seed helpers so CI and browser tests
-   never rely on shared integration state.
-3. Add Convex preview-deployment behavior for branches that change the backend.
-4. Configure a protected GitHub production environment with least-privilege
-   Convex and Cloudflare credentials.
-5. Verify a release candidate, deploy Convex first, then promote the exact
-   tested OpenNext artifact.
+Resolve the GitHub protection prerequisite documented in
+`docs/RELEASE_SETUP.md`, configure the preview and production credentials, and
+run the first protected release. Preserve the commit, Convex target, Worker
+version ID, candidate URL, production URL, and verification results as the
+release receipt.
 
 Do not start Convex Auth/editorial UI until that release foundation is
-repeatable. Do not run the production command locally.
+repeatable. Do not run production deployment commands locally.
 
 Verification receipt from 2026-07-24:
 
 - frozen Bun install: pass
 - `bun run typecheck`: pass
 - `bun run lint`: pass with type-aware Oxlint and denied warnings
-- `bun run test`: 4 of 4 guard tests pass
+- `bun run test`: guard, fixture, preview-export, and release-helper tests pass
 - `bun run build`: pass; six App Router routes emitted
 - `bun run build:worker`: pass; `.open-next/worker.js` emitted
 - local Convex push and idempotent seed: pass

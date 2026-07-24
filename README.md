@@ -150,6 +150,8 @@ TypeScript 7 package.
 
 GitHub Actions now runs frozen installs, static validation, local-Convex
 Playwright flows, Next.js and OpenNext builds, and Worker-runtime smoke tests.
+Same-repository pull requests also have a guarded, disposable Convex preview
+lane once `CONVEX_PREVIEW_DEPLOY_KEY` is configured.
 
 ## Production safety
 
@@ -158,9 +160,10 @@ development. Production promotion will be owned by a protected GitHub
 environment that deploys Convex, builds against the production Convex URL, and
 then deploys the exact tested frontend commit to Cloudflare.
 
-`bun run deploy:production` is intentionally unusable from an ordinary local
-shell. It requires the exact production Convex URL, GitHub Actions, CI, and the
-protected release flag.
+There is no local production deploy command. The manual GitHub release workflow
+is fail-closed until the protected environment and its activation latch are
+configured. It verifies the exact Convex target, tests an immutable Cloudflare
+candidate, and promotes only that version.
 
 Never commit:
 
@@ -169,15 +172,15 @@ Never commit:
 - Cloudflare API tokens
 - OAuth client secrets
 
+The complete prerequisite, release, and rollback checklist is in
+[`docs/RELEASE_SETUP.md`](docs/RELEASE_SETUP.md).
+
 ## Next milestone
 
-The next implementation boundary is protected promotion:
-
-1. Add branch-preview behavior for backend changes that need hosted testing.
-2. Configure protected GitHub preview and production environments with
-   least-privilege credentials.
-3. Verify a release candidate, deploy Convex first, then promote the exact
-   tested OpenNext artifact.
+The CI/CD implementation is locally complete, but activation is blocked by the
+private repository's current GitHub plan. Resolve the protected-environment
+prerequisite, configure least-privilege credentials, run the first verified
+release, and preserve its receipt.
 
 Convex Auth and authenticated editorial controls follow that release
 foundation.
