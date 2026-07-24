@@ -20,10 +20,14 @@ every material statement to its source.
 - When evidence is insufficient or conflicting, say so plainly.
 - Public product surfaces are read-only. Editorial writes require authenticated
   and authorized Convex functions.
+- The initial product is a reliable, public, read-only aggregation and
+  comparison surface. Do not make multi-user accounts or an editorial UI a
+  prerequisite for launching and hardening that core.
 
 ## Decided architecture
 
-- GitHub `arimxyer/kyb`, branch `main`, is the source of truth.
+- Public GitHub repository `arimxyer/kyb`, branch `main`, is the source of
+  truth.
 - Convex is the sole application backend and database.
 - Drizzle, D1, `db/`, `drizzle/`, and the D1 example were obsolete
   scaffolding and have been removed. Do not reintroduce them.
@@ -37,7 +41,7 @@ every material statement to its source.
 - ChatGPT Sites and its authentication/build residue are retired and removed.
 - GitHub Actions owns validation and production promotion.
 - Convex Auth owns editor identity. Editor roles and authorization live in
-  Convex.
+  Convex when the editorial application surface is implemented.
 - Bun is the sole package manager. Commit `bun.lock`; do not add npm, pnpm, or
   Yarn lockfiles.
 
@@ -57,9 +61,11 @@ deployment.
 ## Current implementation state
 
 The Bun migration, dependency refresh, architecture cleanup, OpenNext
-migration, explicit development lanes, and production target guards are
-complete. The next milestone is GitHub validation and protected production
-promotion.
+migration, explicit development lanes, deterministic fixtures, CI validation,
+browser coverage, preview lane, and fail-closed production workflow are
+complete locally. The next boundary is publishing the sanitized repository,
+configuring GitHub and provider credentials, and completing the first verified
+read-only production release.
 
 Oxlint is the linter, including type-aware rules and the experimental aggregate
 React Compiler rule. TypeScript remains on `6.0.3`: the TypeScript 7 CLI passes,
@@ -69,6 +75,10 @@ proves framework support.
 
 `convex/fixtures/prototype.ts` is a seed-only fixture used by
 `convex/seed.ts`. It is not a second runtime data source.
+
+Until the authenticated editorial surface exists, editorial state changes stay
+backend-only as internal Convex operations performed by a trusted deployment
+administrator. Do not expose an unauthenticated write path as a shortcut.
 
 ## Convex rules
 
@@ -105,12 +115,14 @@ the feature that exercises it and its acceptance tests.
    OpenNext.
 2. Completed: add local, cloud-integration, and Worker-preview commands plus
    production target guards.
-3. Next: add GitHub validation and protected production deployment.
-4. Implement Convex Auth and authenticated editorial controls.
-5. Adopt the ingestion components in the sequence defined by the decision
-   record.
-6. Build evidence-grounded AI Q&A with RAG and Agent.
-7. Expand address matching and election coverage.
+3. Completed locally: add GitHub validation, preview deployments, and guarded
+   production promotion.
+4. Launch and verify the public read-only pilot.
+5. Harden source ingestion, data correctness, freshness, observability, and
+   backend-only review operations.
+6. Expand address matching and election coverage.
+7. Implement Convex Auth and authenticated multi-user editorial controls.
+8. Build evidence-grounded AI Q&A with RAG and Agent.
 
 Do not begin AI Q&A before the authenticated review workflow and evidence
 retrieval boundaries are tested.

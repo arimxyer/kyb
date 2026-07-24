@@ -347,11 +347,16 @@ Pull requests must run:
 6. OpenNext production build
 7. targeted Worker-preview smoke tests
 
-Merges to `main` may promote to production only after all checks pass and the
-protected `production` environment is approved. The release job deploys Convex
-first, builds the frontend with the production Convex URL supplied by the
-release environment, then deploys the exact tested frontend commit to
-Cloudflare.
+Merges to protected `main` may be promoted only after all checks pass. During
+the solo-maintainer phase, an explicit manual workflow dispatch, typed
+confirmation, exact-commit validation, and branch-restricted production
+environment form the approval boundary. A second-person reviewer becomes
+required when another trusted maintainer exists; it is not a launch
+prerequisite.
+
+The release job deploys Convex first, builds the frontend with the production
+Convex URL supplied by the release environment, then deploys the exact tested
+frontend commit to Cloudflare.
 
 Required secrets belong in GitHub/Cloudflare/Convex configuration, never the
 repository:
@@ -375,10 +380,12 @@ Implementation status on 2026-07-24:
 - The first Cloudflare release bootstraps only a 503 maintenance Worker before
   candidate verification because Cloudflare cannot upload an undeployed first
   version.
-- Activation remains blocked: the private repository's current GitHub plan
-  cannot provide the required production environment, protected `main` branch,
-  and separate reviewer approval. `docs/RELEASE_SETUP.md` records the setup
-  boundary. No production deployment has been run.
+- The repository will become public after a pre-publication history and secret
+  audit. Public visibility unlocks protected `main` and environment controls on
+  the current GitHub plan without making a second-person review a launch
+  prerequisite.
+- `docs/RELEASE_SETUP.md` records the activation boundary. No production
+  deployment has been run.
 
 ## ADR-006: Convex Auth and role-based editorial controls
 
@@ -537,8 +544,8 @@ Status: complete on 2026-07-24.
 
 ### Milestone 2: CI/CD and test lanes
 
-Implementation status: complete locally on 2026-07-24; external activation
-blocked by the GitHub plan prerequisite.
+Implementation status: complete locally on 2026-07-24; publication and external
+configuration remain.
 
 - Added GitHub pull-request validation.
 - Added bounded, deterministic local Convex fixture reset/seed helpers.
@@ -550,42 +557,55 @@ blocked by the GitHub plan prerequisite.
 - Did not configure credentials, weaken protection, or run a production
   deployment.
 
-### Milestone 3: authenticated editorial workflow
+### Milestone 3: public read-only pilot
 
-- Add Convex Auth with GitHub OAuth.
-- Add role membership and authorization helpers.
-- Replace internal-only review operations with authenticated, role-gated public
-  functions where the client must call them.
-- Build the editor review queue and approve/reject/publish controls.
-- Migrate audit actors from strings to authenticated user references.
+- Publish the sanitized repository.
+- Configure protected `main`, branch-restricted release credentials, and the
+  Convex preview key.
+- Run the first production release through candidate verification and exact
+  version promotion.
+- Verify the public ballot, race, candidate, evidence, and research surfaces.
+- Preserve the release receipt and exercise the rollback path.
 
 ### Milestone 4: durable ingestion
+
+This milestone now precedes the authenticated editorial UI. Publication remains
+review-gated, but the solo phase uses backend-only internal review operations
+rather than exposing a public write surface.
 
 - Adopt Rate Limiter, Workpool, Workflow, Action Cache, and R2 in the documented
   sequence.
 - Add source-specific adapters, retries, observability, and change extraction.
 
-### Milestone 5: evidence-grounded AI Q&A
-
-- Adopt RAG and Agent.
-- Enforce citation, publication-state filters, and abstention.
-
-### Milestone 6: ballot and coverage expansion
+### Milestone 5: ballot and coverage expansion
 
 - Address-to-district resolution.
 - Federal, state, county, judicial, and local races.
 - Freshness policy, monitoring, backups, and production reliability.
 
+### Milestone 6: authenticated editorial workflow
+
+- Add Convex Auth and role membership.
+- Build authenticated review and publication controls.
+- Replace temporary deployment-admin operations with audited user identities.
+
+### Milestone 7: evidence-grounded AI Q&A
+
+- Adopt RAG and Agent.
+- Enforce citation, publication-state filters, and abstention.
+
 ## Immediate handoff
 
-Resolve the GitHub protection prerequisite documented in
-`docs/RELEASE_SETUP.md`, configure the preview and production credentials, and
-run the first protected release. Preserve the commit, Convex target, Worker
+Publish the sanitized repository, configure the public-repository protections
+and provider credentials documented in `docs/RELEASE_SETUP.md`, and run the
+first verified read-only release. Preserve the commit, Convex target, Worker
 version ID, candidate URL, production URL, and verification results as the
 release receipt.
 
-Do not start Convex Auth/editorial UI until that release foundation is
-repeatable. Do not run production deployment commands locally.
+After release, prioritize source correctness, ingestion robustness, freshness,
+and election coverage. Do not expose editorial writes before Convex Auth, and
+do not start AI Q&A until authenticated review and retrieval boundaries are
+tested. Do not run production deployment commands locally.
 
 Verification receipt from 2026-07-24:
 

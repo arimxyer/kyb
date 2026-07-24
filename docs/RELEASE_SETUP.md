@@ -4,26 +4,18 @@ The production workflow is committed but intentionally inactive. It has never
 been run against production. Keep `KYB_PRODUCTION_RELEASE_ENABLED` unset until
 every prerequisite below is complete.
 
-## Current blocker
+## Publication decision
 
-As checked on 2026-07-24, this repository is private and its current GitHub
-plan does not permit the protected environment and branch configuration
-required by `docs/ARCHITECTURE_DECISIONS.md`.
+The repository will become public. Public visibility provides the branch and
+environment controls needed by the solo-maintainer release policy on the
+current GitHub plan.
 
-GitHub Free supports environments only for public repositories. GitHub Pro and
-Team add private-repository environments and deployment branch rules, but
-required reviewers and wait timers remain public-repository-only on Free, Pro,
-and Team. A private repository therefore needs GitHub Enterprise for the
-decision record's separate production approval gate.
+Before changing visibility:
 
-Do not replace that gate with repository-level production secrets or set the
-activation variable as a workaround. The acceptable paths are:
-
-1. keep the repository private and move it to a GitHub plan that supports the
-   required approval;
-2. make the repository public if that is an intentional product decision; or
-3. explicitly revise the architecture decision and adopt a comparably strong
-   release control.
+1. scan all reachable Git history for credentials;
+2. inspect retired hosting and authentication files;
+3. ensure commit metadata does not expose a private author email;
+4. push only after the sanitized history is verified.
 
 References:
 
@@ -40,11 +32,8 @@ the secret and do not run this job.
 
 ## Protected production environment
 
-After the GitHub plan blocker is resolved, configure a `production`
-environment with:
+After publication, configure a `production` environment with:
 
-- a required reviewer other than the person starting the release;
-- self-review disabled;
 - administrator bypass disabled;
 - deployment restricted to `main`;
 - environment secret `CONVEX_DEPLOY_KEY`, scoped to the existing production
@@ -61,6 +50,11 @@ environment with:
 Configure required `main` checks and block direct pushes. The `Validate`
 workflow must pass for the exact release commit.
 
+During the solo-maintainer phase, the manual workflow dispatch and exact typed
+confirmation are the intentional approval action. Add a required reviewer and
+disable self-review when another trusted maintainer joins; do not invent a
+second identity merely to satisfy ceremony.
+
 Set repository variable `KYB_PRODUCTION_RELEASE_ENABLED=1` last. It is the
 outer activation latch; the environment protection and environment-scoped
 credentials remain the actual production boundary.
@@ -73,7 +67,7 @@ Run `Release production` from `main` and enter the exact confirmation
 The workflow:
 
 1. reruns the complete validation workflow for the exact commit;
-2. waits at the protected `production` environment;
+2. enters the branch-restricted `production` environment;
 3. verifies the ref, commit, target URLs, activation flags, and credential
    presence without printing secrets;
 4. asks the Convex CLI to inject the deployment-key target URL and verifies it

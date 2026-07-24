@@ -25,8 +25,10 @@ change detection, and a private review-state foundation.
 - **Daily development:** local frontend plus local Convex.
 - **Integration testing:** the existing cloud Convex development deployment.
 - **Production:** Cloudflare Workers plus production Convex.
-- **Source and releases:** GitHub with protected CI/CD.
-- **Editor identity:** Convex Auth and Convex-hosted role authorization.
+- **Source and releases:** public GitHub repository with protected CI/CD.
+- **Initial operating model:** public read-only product; backend-only trusted
+  editorial operations.
+- **Later editor identity:** Convex Auth and Convex-hosted role authorization.
 
 The repository now uses the target frontend and data architecture: standard
 Next.js builds, OpenNext Worker bundles, and Convex as the sole backend. The
@@ -177,10 +179,11 @@ The complete prerequisite, release, and rollback checklist is in
 
 ## Next milestone
 
-The CI/CD implementation is locally complete, but activation is blocked by the
-private repository's current GitHub plan. Resolve the protected-environment
-prerequisite, configure least-privilege credentials, run the first verified
-release, and preserve its receipt.
+Publish the sanitized repository, configure protected `main` plus
+least-privilege release credentials, and run the first verified read-only
+release. Then prioritize data correctness, ingestion reliability, freshness,
+and election coverage.
 
-Convex Auth and authenticated editorial controls follow that release
-foundation.
+Convex Auth and the multi-user editorial interface are intentionally deferred.
+They must exist before any editorial write surface is exposed, but they do not
+block the initial read-only product.
