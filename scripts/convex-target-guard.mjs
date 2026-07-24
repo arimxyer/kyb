@@ -11,6 +11,7 @@ const SUPPORTED_MODES = new Set([
   "local",
   "integration",
   "non-production",
+  "preview-ci",
   "production-ci",
 ]);
 
@@ -70,6 +71,21 @@ export function isLocalConvexUrl(value) {
   }
 }
 
+export function isPreviewConvexUrl(value) {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      url.port === "" &&
+      url.hostname.endsWith(".convex.cloud") &&
+      value !== INTEGRATION_CONVEX_URL &&
+      value !== PRODUCTION_CONVEX_URL
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function validateConvexTarget({
   mode,
   convexUrl,
@@ -97,6 +113,7 @@ export function validateConvexTarget({
 
   const isLocal = isLocalConvexUrl(convexUrl);
   const isIntegration = convexUrl === INTEGRATION_CONVEX_URL;
+  const isPreview = isPreviewConvexUrl(convexUrl);
 
   if (mode === "local" && !isLocal) {
     throw new Error(
@@ -114,6 +131,24 @@ export function validateConvexTarget({
     throw new Error(
       "The non-production lane accepts only local Convex or the configured integration deployment.",
     );
+  }
+
+  if (mode === "preview-ci") {
+    if (!isPreview) {
+      throw new Error(
+        "The preview command requires a non-production Convex preview deployment.",
+      );
+    }
+
+    if (
+      env.CI !== "true" ||
+      env.GITHUB_ACTIONS !== "true" ||
+      env.KYB_ALLOW_PREVIEW_BUILD !== "1"
+    ) {
+      throw new Error(
+        "Preview builds are restricted to the GitHub Actions preview job.",
+      );
+    }
   }
 
   if (mode === "production-ci") {
@@ -138,6 +173,8 @@ export function validateConvexTarget({
     lane:
       mode === "production-ci"
         ? "production"
+        : mode === "preview-ci"
+          ? "preview"
         : isLocal
           ? "local"
           : "integration",

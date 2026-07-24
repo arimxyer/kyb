@@ -1,6 +1,8 @@
 import { defineConfig, devices } from "@playwright/test";
 
-const workerTarget = process.env.PLAYWRIGHT_TARGET === "worker";
+const previewTarget = process.env.PLAYWRIGHT_TARGET === "preview";
+const workerTarget =
+  process.env.PLAYWRIGHT_TARGET === "worker" || previewTarget;
 const port = workerTarget ? 8788 : 3000;
 const baseURL = workerTarget
   ? `http://127.0.0.1:${port}`
@@ -8,6 +10,15 @@ const baseURL = workerTarget
 const frontendCommand = workerTarget
   ? "bunx opennextjs-cloudflare preview --port 8788 --log-level warn"
   : "bun run start";
+const convexWebServer = {
+  command:
+    "CONVEX_AGENT_MODE=anonymous bunx convex dev --typecheck enable --tail-logs disable",
+  url: "http://127.0.0.1:3210",
+  reuseExistingServer: false,
+  timeout: 120_000,
+  stdout: "pipe",
+  stderr: "pipe",
+} as const;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -38,15 +49,7 @@ export default defineConfig({
     },
   ],
   webServer: [
-    {
-      command:
-        "CONVEX_AGENT_MODE=anonymous bunx convex dev --typecheck enable --tail-logs disable",
-      url: "http://127.0.0.1:3210",
-      reuseExistingServer: false,
-      timeout: 120_000,
-      stdout: "pipe",
-      stderr: "pipe",
-    },
+    ...(!previewTarget ? [convexWebServer] : []),
     {
       command: frontendCommand,
       url: baseURL,
@@ -54,6 +57,6 @@ export default defineConfig({
       timeout: 120_000,
       stdout: "pipe",
       stderr: "pipe",
-    },
+    } as const,
   ],
 });
