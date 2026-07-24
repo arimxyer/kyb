@@ -138,6 +138,8 @@ bun run lint
 bun run test
 bun run build
 bun run build:worker
+bun run test:e2e:local
+bun run test:e2e:worker
 ```
 
 Linting uses Oxlint `1.75.0` with its correctness category, migrated Next.js,
@@ -146,8 +148,8 @@ React, import, and accessibility rules, type-aware checks through
 `6.0.3` because Next.js `16.2.11` cannot complete its production build with the
 TypeScript 7 package.
 
-The next GitHub workflow milestone will automate local-Convex backend tests,
-browser tests, OpenNext production builds, and Worker-runtime smoke tests.
+GitHub Actions now runs frozen installs, static validation, local-Convex
+Playwright flows, Next.js and OpenNext builds, and Worker-runtime smoke tests.
 
 ## Production safety
 
@@ -169,16 +171,13 @@ Never commit:
 
 ## Next milestone
 
-The next local agent starts with GitHub validation and protected production
-promotion:
+The next implementation boundary is protected promotion:
 
-1. Add locked Bun install, typecheck, Oxlint, unit, local-Convex, browser,
-   Next.js, and OpenNext Worker checks.
-2. Add deterministic local fixture reset/seed helpers.
-3. Add branch-preview behavior for backend changes that need hosted testing.
-4. Configure a protected production environment and least-privilege Convex and
-   Cloudflare credentials.
-5. Promote Convex first, then the exact tested OpenNext artifact.
+1. Add branch-preview behavior for backend changes that need hosted testing.
+2. Configure protected GitHub preview and production environments with
+   least-privilege credentials.
+3. Verify a release candidate, deploy Convex first, then promote the exact
+   tested OpenNext artifact.
 
 Convex Auth and authenticated editorial controls follow that release
 foundation.

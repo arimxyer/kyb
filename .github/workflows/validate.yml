@@ -83,3 +83,46 @@ jobs:
         run: |
           test -f .open-next/worker.js
           test -d .open-next/assets
+
+  browser-and-worker-smoke:
+    name: Browser and Worker smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+
+      - name: Install dependencies
+        run: bun run install:ci
+
+      - name: Install Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Test local Next.js with local Convex
+        run: bun run test:e2e:local
+
+      - name: Smoke-test the OpenNext Worker
+        run: bun run test:e2e:worker
+
+      - name: Upload browser failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-failure-${{ github.run_id }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
