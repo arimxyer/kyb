@@ -1,0 +1,9 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "know-your-ballot",
+  "main": "scripts/cloudflare-bootstrap-worker.mjs",
+  "compatibility_date": "2026-07-24",
+  "workers_dev": true,
+  "preview_urls": true,
+  "keep_vars": true
+}

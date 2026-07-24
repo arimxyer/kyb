@@ -1,12 +1,22 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const remoteTarget = process.env.PLAYWRIGHT_TARGET === "remote";
 const previewTarget = process.env.PLAYWRIGHT_TARGET === "preview";
 const workerTarget =
   process.env.PLAYWRIGHT_TARGET === "worker" || previewTarget;
 const port = workerTarget ? 8788 : 3000;
-const baseURL = workerTarget
-  ? `http://127.0.0.1:${port}`
-  : `http://localhost:${port}`;
+const baseURL = remoteTarget
+  ? process.env.PLAYWRIGHT_BASE_URL
+  : workerTarget
+    ? `http://127.0.0.1:${port}`
+    : `http://localhost:${port}`;
+
+if (remoteTarget && !baseURL) {
+  throw new Error(
+    "PLAYWRIGHT_BASE_URL is required when PLAYWRIGHT_TARGET=remote.",
+  );
+}
+
 const frontendCommand = workerTarget
   ? "bunx opennextjs-cloudflare preview --port 8788 --log-level warn"
   : "bun run start";
@@ -48,15 +58,17 @@ export default defineConfig({
       },
     },
   ],
-  webServer: [
-    ...(!previewTarget ? [convexWebServer] : []),
-    {
-      command: frontendCommand,
-      url: baseURL,
-      reuseExistingServer: false,
-      timeout: 120_000,
-      stdout: "pipe",
-      stderr: "pipe",
-    } as const,
-  ],
+  webServer: remoteTarget
+    ? []
+    : [
+        ...(!previewTarget ? [convexWebServer] : []),
+        {
+          command: frontendCommand,
+          url: baseURL,
+          reuseExistingServer: false,
+          timeout: 120_000,
+          stdout: "pipe",
+          stderr: "pipe",
+        } as const,
+      ],
 });
