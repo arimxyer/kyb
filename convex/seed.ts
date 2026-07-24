@@ -5,7 +5,7 @@ import {
   election as prototypeElection,
   sources as prototypeSources,
 } from "./fixtures/prototype";
-import type { Id } from "./_generated/dataModel";
+import type { Id, TableNames } from "./_generated/dataModel";
 import { internalMutation } from "./_generated/server";
 
 const reviewedAt = Date.parse("2026-07-23T12:00:00-04:00");
@@ -24,6 +24,27 @@ const seedResult = v.object({
   endorsements: v.number(),
   financeReports: v.number(),
 });
+
+const prototypeResetConfirmation = "RESET_LOCAL_PROTOTYPE";
+const resetBatchSize = 128;
+const prototypeTableNames = [
+  "sourceRefreshes",
+  "reviewEvents",
+  "claimDrafts",
+  "sourceSnapshots",
+  "claims",
+  "officeTerms",
+  "endorsements",
+  "financeReports",
+  "candidates",
+  "races",
+  "elections",
+  "sources",
+] as const satisfies readonly TableNames[];
+const resetTableCoverage: Record<
+  Exclude<TableNames, (typeof prototypeTableNames)[number]>,
+  never
+> = {};
 
 export const prototype = internalMutation({
   args: {},
@@ -345,6 +366,48 @@ export const prototype = internalMutation({
       officeTerms: 3,
       endorsements: 2,
       financeReports: financeReportCount,
+    };
+  },
+});
+
+export const resetPrototypeBatch = internalMutation({
+  args: {
+    confirmation: v.literal(prototypeResetConfirmation),
+  },
+  returns: v.object({
+    status: v.literal("reset-batch"),
+    table: v.union(
+      ...prototypeTableNames.map((tableName) => v.literal(tableName)),
+      v.null(),
+    ),
+    deleted: v.number(),
+    done: v.boolean(),
+  }),
+  handler: async (ctx) => {
+    void resetTableCoverage;
+
+    for (const tableName of prototypeTableNames) {
+      const documents = await ctx.db.query(tableName).take(resetBatchSize);
+
+      if (documents.length === 0) continue;
+
+      for (const document of documents) {
+        await ctx.db.delete(document._id);
+      }
+
+      return {
+        status: "reset-batch" as const,
+        table: tableName,
+        deleted: documents.length,
+        done: false,
+      };
+    }
+
+    return {
+      status: "reset-batch" as const,
+      table: null,
+      deleted: 0,
+      done: true,
     };
   },
 });
