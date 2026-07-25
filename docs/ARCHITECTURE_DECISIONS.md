@@ -1,6 +1,6 @@
 # Know Your Ballot architecture and decision record
 
-Last updated: 2026-07-24  
+Last updated: 2026-07-25
 Repository baseline reviewed: `arimxyer/kyb@f6fcca3`
 
 ## Purpose
@@ -20,7 +20,7 @@ into a locally developed, directly hosted, dependable product.
 |---|---|
 | Product coverage | NY-04 / ZIP 11557 pilot |
 | Frontend | Next.js `16.2.11` built for Cloudflare Workers with OpenNext `1.20.2` |
-| Current frontend host | No production Worker promoted yet; the repository's ChatGPT Sites path is retired |
+| Current frontend host | Cloudflare Worker at `https://know-your-ballot.ari111097.workers.dev` |
 | Backend | Convex |
 | Production Convex | `https://warmhearted-raccoon-48.convex.cloud` |
 | Cloud development Convex | `https://sleek-snail-205.convex.cloud` |
@@ -369,7 +369,7 @@ repository:
 Branch previews should use isolated Convex preview deployments when backend
 changes need hosted verification.
 
-Implementation status on 2026-07-24:
+Implementation status on 2026-07-25:
 
 - Static, build, browser, local Worker, and same-repository Convex-preview
   workflows are committed.
@@ -380,12 +380,13 @@ Implementation status on 2026-07-24:
 - The first Cloudflare release bootstraps only a 503 maintenance Worker before
   candidate verification because Cloudflare cannot upload an undeployed first
   version.
-- The repository will become public after a pre-publication history and secret
-  audit. Public visibility unlocks protected `main` and environment controls on
-  the current GitHub plan without making a second-person review a launch
-  prerequisite.
-- `docs/RELEASE_SETUP.md` records the activation boundary. No production
-  deployment has been run.
+- The repository is public after a pre-publication history and secret audit.
+  Protected `main` and the branch-restricted production environment are active.
+- The first production release completed through the protected workflow at
+  commit `3cb3a7893516fb14e3bbd069bedd1e92e38dfd4f`. Cloudflare Worker version
+  `8492f9d4-1444-4774-9f73-90776b44a9fd` serves 100 percent of traffic.
+- `docs/RELEASE_SETUP.md` preserves the complete release receipt and the
+  remaining durable Cloudflare-token setup.
 
 ## ADR-006: Convex Auth and role-based editorial controls
 
@@ -544,8 +545,7 @@ Status: complete on 2026-07-24.
 
 ### Milestone 2: CI/CD and test lanes
 
-Implementation status: complete locally on 2026-07-24; publication and external
-configuration remain.
+Status: complete on 2026-07-25.
 
 - Added GitHub pull-request validation.
 - Added bounded, deterministic local Convex fixture reset/seed helpers.
@@ -554,18 +554,25 @@ configuration remain.
 - Added same-repository disposable Convex previews.
 - Added a fail-closed production workflow with a maintenance-only first Worker,
   immutable candidate verification, and exact-version promotion.
-- Did not configure credentials, weaken protection, or run a production
-  deployment.
+- Published the sanitized repository, activated protected `main`, configured
+  the production environment, and verified the hosted preview lane.
 
 ### Milestone 3: public read-only pilot
 
-- Publish the sanitized repository.
-- Configure protected `main`, branch-restricted release credentials, and the
-  Convex preview key.
-- Run the first production release through candidate verification and exact
+Status: launched and verified on 2026-07-25.
+
+- Published the sanitized repository.
+- Configured protected `main`, the branch-restricted production environment,
+  and the Convex preview key.
+- Ran the first production release through candidate verification and exact
   version promotion.
-- Verify the public ballot, race, candidate, evidence, and research surfaces.
-- Preserve the release receipt and exercise the rollback path.
+- Verified the public ballot, race, candidate, evidence, and research surfaces.
+- Preserved the exact version rollback handle in `docs/RELEASE_SETUP.md`.
+- Did not invoke a live rollback after the successful launch; rehearse that
+  approved operation before the next high-risk release.
+- Removed the temporary bootstrap credential and closed the release latch. A
+  durable account-owned Cloudflare token remains required before the next
+  release.
 
 ### Milestone 4: durable ingestion
 
@@ -596,18 +603,19 @@ rather than exposing a public write surface.
 
 ## Immediate handoff
 
-Publish the sanitized repository, configure the public-repository protections
-and provider credentials documented in `docs/RELEASE_SETUP.md`, and run the
-first verified read-only release. Preserve the commit, Convex target, Worker
-version ID, candidate URL, production URL, and verification results as the
-release receipt.
+The public read-only pilot is live and its release receipt is preserved in
+`docs/RELEASE_SETUP.md`. Prioritize source correctness, ingestion robustness,
+freshness, observability, backend-only review operations, and election
+coverage.
 
-After release, prioritize source correctness, ingestion robustness, freshness,
-and election coverage. Do not expose editorial writes before Convex Auth, and
-do not start AI Q&A until authenticated review and retrieval boundaries are
-tested. Do not run production deployment commands locally.
+Before the next production release, create the durable, account-owned
+Cloudflare token described in `docs/RELEASE_SETUP.md`; store it only in the
+GitHub `production` environment and enable the repository release latch last.
+Do not expose editorial writes before Convex Auth, and do not start AI Q&A
+until authenticated review and retrieval boundaries are tested. Do not run
+production deployment commands locally.
 
-Verification receipt from 2026-07-24:
+Verification receipts from 2026-07-24 and 2026-07-25:
 
 - frozen Bun install: pass
 - `bun run typecheck`: pass
@@ -618,4 +626,9 @@ Verification receipt from 2026-07-24:
 - local Convex push and idempotent seed: pass
 - integration Convex sync and idempotent seed: pass
 - local Next hydration and local/integration Worker browser flows: pass
-- production deployment: not run
+- hosted Convex preview and remote Worker browser flow: pass; Actions run
+  `30137037640`
+- protected production deployment: pass; Actions run `30137092041`
+- Cloudflare Worker version
+  `8492f9d4-1444-4774-9f73-90776b44a9fd`: 100 percent traffic
+- independent production HTTP and remote Chromium voter journey: pass
