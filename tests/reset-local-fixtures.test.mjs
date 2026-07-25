@@ -37,8 +37,13 @@ test("resets in bounded batches before seeding a fresh local fixture", () => {
 
   const result = resetLocalFixtures({
     env: localEnv,
-    invoke(functionName, args) {
-      calls.push({ functionName, args, deployment: "local" });
+    invoke(functionName, args, options) {
+      calls.push({
+        functionName,
+        args,
+        deployment: "local",
+        agentMode: options.env.CONVEX_AGENT_MODE,
+      });
       return results.shift();
     },
   });
@@ -58,6 +63,7 @@ test("resets in bounded batches before seeding a fresh local fixture", () => {
     confirmation: "RESET_LOCAL_PROTOTYPE",
   });
   assert.ok(calls.every(({ deployment }) => deployment === "local"));
+  assert.ok(calls.every(({ agentMode }) => agentMode === "anonymous"));
 });
 
 test("refuses to reset any non-local Convex target", () => {

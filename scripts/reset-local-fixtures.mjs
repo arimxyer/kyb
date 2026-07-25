@@ -10,7 +10,11 @@ import {
 const resetConfirmation = "RESET_LOCAL_PROTOTYPE";
 const maxResetBatches = 10_000;
 
-function invokeConvex(functionName, args, { cwd = process.cwd() } = {}) {
+function invokeConvex(
+  functionName,
+  args,
+  { cwd = process.cwd(), env = process.env } = {},
+) {
   const result = spawnSync(
     "bunx",
     [
@@ -24,7 +28,7 @@ function invokeConvex(functionName, args, { cwd = process.cwd() } = {}) {
     {
       cwd,
       encoding: "utf8",
-      env: process.env,
+      env,
     },
   );
 
@@ -56,6 +60,11 @@ export function resetLocalFixtures({
     env,
   });
 
+  const localConvexEnv = {
+    ...env,
+    CONVEX_AGENT_MODE: "anonymous",
+  };
+
   let documentsDeleted = 0;
   let batches = 0;
 
@@ -63,7 +72,7 @@ export function resetLocalFixtures({
     const result = invoke(
       "seed:resetPrototypeBatch",
       { confirmation: resetConfirmation },
-      { cwd },
+      { cwd, env: localConvexEnv },
     );
 
     if (
@@ -78,7 +87,7 @@ export function resetLocalFixtures({
     batches += 1;
 
     if (result.done) {
-      const seed = invoke("seed:prototype", {}, { cwd });
+      const seed = invoke("seed:prototype", {}, { cwd, env: localConvexEnv });
 
       if (seed?.status !== "seeded") {
         throw new Error("Convex seed did not create a fresh prototype dataset.");

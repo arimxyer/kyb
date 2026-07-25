@@ -21,7 +21,7 @@
     "preview:local": "bun scripts/convex-target-guard.mjs local && opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "preview:integration": "bun scripts/convex-target-guard.mjs integration && opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "fixtures:reset:local": "bun scripts/reset-local-fixtures.mjs",
-    "fixtures:seed:local": "bun scripts/convex-target-guard.mjs local && bunx convex run seed:prototype '{}' --deployment local",
+    "fixtures:seed:local": "bun scripts/convex-target-guard.mjs local && CONVEX_AGENT_MODE=anonymous bunx convex run seed:prototype '{}' --deployment local",
     "test:e2e:prepare": "CONVEX_AGENT_MODE=anonymous bunx convex dev --once --typecheck enable --tail-logs disable && bun run fixtures:reset:local",
     "test:e2e:local": "bun run test:e2e:prepare && bun run build && bunx playwright test",
     "test:e2e:worker": "bun run test:e2e:prepare && bun run build:worker && PLAYWRIGHT_TARGET=worker bunx playwright test --grep @smoke --project=chromium-desktop",
