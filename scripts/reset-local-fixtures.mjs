@@ -22,8 +22,6 @@ function invokeConvex(
       "run",
       functionName,
       JSON.stringify(args),
-      "--deployment",
-      "local",
     ],
     {
       cwd,

@@ -41,7 +41,6 @@ test("resets in bounded batches before seeding a fresh local fixture", () => {
       calls.push({
         functionName,
         args,
-        deployment: "local",
         agentMode: options.env.CONVEX_AGENT_MODE,
       });
       return results.shift();
@@ -62,7 +61,6 @@ test("resets in bounded batches before seeding a fresh local fixture", () => {
   assert.deepEqual(calls[0]?.args, {
     confirmation: "RESET_LOCAL_PROTOTYPE",
   });
-  assert.ok(calls.every(({ deployment }) => deployment === "local"));
   assert.ok(calls.every(({ agentMode }) => agentMode === "anonymous"));
 });
 
