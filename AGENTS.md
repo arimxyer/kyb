@@ -62,10 +62,15 @@ deployment.
 
 The Bun migration, dependency refresh, architecture cleanup, OpenNext
 migration, explicit development lanes, deterministic fixtures, CI validation,
-browser coverage, preview lane, and fail-closed production workflow are
-complete locally. The next boundary is publishing the sanitized repository,
-configuring GitHub and provider credentials, and completing the first verified
-read-only production release.
+browser coverage, preview lane, and protected production workflow are
+complete. The sanitized repository is public and the first verified read-only
+release is live at `https://know-your-ballot.ari111097.workers.dev`.
+
+The next product boundary is source correctness, ingestion robustness,
+freshness, observability, and coverage. The temporary Cloudflare credential
+used to bootstrap the first release was removed afterward. Before the next
+production release, add the durable account-owned token documented in
+`docs/RELEASE_SETUP.md`, then enable the release latch last.
 
 Oxlint is the linter, including type-aware rules and the experimental aggregate
 React Compiler rule. TypeScript remains on `6.0.3`: the TypeScript 7 CLI passes,
@@ -115,9 +120,9 @@ the feature that exercises it and its acceptance tests.
    OpenNext.
 2. Completed: add local, cloud-integration, and Worker-preview commands plus
    production target guards.
-3. Completed locally: add GitHub validation, preview deployments, and guarded
+3. Completed: add GitHub validation, preview deployments, and guarded
    production promotion.
-4. Launch and verify the public read-only pilot.
+4. Completed: launch and verify the public read-only pilot.
 5. Harden source ingestion, data correctness, freshness, observability, and
    backend-only review operations.
 6. Expand address matching and election coverage.

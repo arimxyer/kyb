@@ -1,16 +1,17 @@
 # Production release setup
 
-The production workflow is committed but intentionally inactive. It has never
-been run against production. Keep `KYB_PRODUCTION_RELEASE_ENABLED` unset until
-every prerequisite below is complete.
+The protected production workflow completed its first release on 2026-07-25.
+It is intentionally inactive again: `KYB_PRODUCTION_RELEASE_ENABLED` is unset,
+and the temporary Cloudflare OAuth credential used for the bootstrap release
+has been removed from GitHub.
 
 ## Publication decision
 
-The repository will become public. Public visibility provides the branch and
-environment controls needed by the solo-maintainer release policy on the
-current GitHub plan.
+The repository is public. Public visibility provides the branch and environment
+controls needed by the solo-maintainer release policy on the current GitHub
+plan.
 
-Before changing visibility:
+The following checks were completed before changing visibility:
 
 1. scan all reachable Git history for credentials;
 2. inspect retired hosting and authentication files;
@@ -32,7 +33,7 @@ the secret and do not run this job.
 
 ## Protected production environment
 
-After publication, configure a `production` environment with:
+The `production` environment uses:
 
 - administrator bypass disabled;
 - deployment restricted to `main`;
@@ -58,6 +59,45 @@ second identity merely to satisfy ceremony.
 Set repository variable `KYB_PRODUCTION_RELEASE_ENABLED=1` last. It is the
 outer activation latch; the environment protection and environment-scoped
 credentials remain the actual production boundary.
+
+The durable `CLOUDFLARE_API_TOKEN` is the only missing credential after the
+first release. Create an account-owned token named `kyb-github-production`,
+scope it to this Cloudflare account, and grant only `Workers Scripts: Edit`.
+Store it in the `production` environment, then enable the repository latch
+immediately before the next approved release. Do not reuse or export the local
+Wrangler OAuth credential.
+
+## First production release receipt
+
+- Date: 2026-07-25
+- Commit:
+  `3cb3a7893516fb14e3bbd069bedd1e92e38dfd4f`
+- Preview workflow:
+  <https://github.com/arimxyer/kyb/actions/runs/30137037640>
+- Production workflow:
+  <https://github.com/arimxyer/kyb/actions/runs/30137092041>
+- Convex target: `https://warmhearted-raccoon-48.convex.cloud`
+- Worker version: `8492f9d4-1444-4774-9f73-90776b44a9fd`
+- Immutable candidate:
+  <https://8492f9d4-know-your-ballot.ari111097.workers.dev>
+- Candidate alias:
+  <https://candidate-know-your-ballot.ari111097.workers.dev>
+- Production:
+  <https://know-your-ballot.ari111097.workers.dev>
+- Cloudflare deployment: version above at 100 percent, deployment message
+  `release-3cb3a7893516fb14e3bbd069bedd1e92e38dfd4f`
+- Workflow verification: complete validation, Convex deploy, candidate test,
+  exact-version promotion, and promoted-production test passed.
+- Independent verification: production returned HTTP 200 with the title
+  `Know Your Ballot`; a fresh remote Chromium voter-journey smoke test passed
+  in 3.1 seconds.
+- Observation: the candidate test's first attempt encountered a transient 404
+  while the preview alias propagated. Its configured retry passed, the
+  promoted-production test passed, and the independent post-release run passed
+  without retry.
+- Credential cleanup: the temporary local Wrangler OAuth credential was
+  removed from GitHub immediately after verification, and the repository
+  release latch was unset.
 
 ## Release behavior
 
